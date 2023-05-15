@@ -1,3 +1,3 @@
 # C-ARM-App-Project
 
-Run min.py
+Run main.py
