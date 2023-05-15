@@ -1,3 +1,5 @@
 # C-ARM-App-Project
 
-Run main.py
+Model from: https://www.kaggle.com/datasets/sachinpatel21/az-handwritten-alphabets-in-csv-format?resource=download
+
+Run main.py untuk menjalankan program
