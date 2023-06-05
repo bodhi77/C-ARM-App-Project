@@ -13,7 +13,7 @@ custom_objects = {'DepthwiseConv2D': Conv2D}
 model = load_model('model/digits.h5', custom_objects=custom_objects)
 
 #Fonts
-font1=("Arial Rounded MT Bold", 16)
+font1=("Arial Rounded MT Bold", 14)
 font2=("Helavetica",16)
 
 #Backgrounds
@@ -28,6 +28,7 @@ class App:
     def __init__(self, window, window_title, video_source=0):
         self.window = window
         self.window.title(window_title)
+        self.window.iconbitmap('icon.ico')
         self.video_source = video_source
         
         # open video source
@@ -58,9 +59,10 @@ class App:
         }
 
         # self.canvas.create_rectangle(100,200,1000,600, outline="#E8F9FD", fill= 'black')
-        self.canvas.create_rectangle(0, 0, 660, 540, fill=bg1) #Main Frame
-        self.canvas.create_rectangle(780, 0, 1400, 680, fill=bg1)
-        self.canvas.create_rectangle(0, 550, 660, 800, fill=bg1) #Detection
+        self.canvas.create_rectangle(0, 0, 1920, 1080, fill=bg1)
+        self.canvas.create_rectangle(20, 20, 720, 780, fill=bg1, outline=bg2, width=2) #Main Frame
+        self.canvas.create_rectangle(750, 20, 1510, 780, fill=bg1, outline=bg2, width=2)
+        # self.canvas.create_rectangle(0, 550, 660, 800, fill=bg1, outline=bg2, width=2) #Detection
         
         # Capture Button
         self.cap_btn_status = False
@@ -69,7 +71,7 @@ class App:
         self.cap_btn = tkinter.Button(window, textvariable=self.cap_btn_text, font=font2, bg=bg2, fg=fg1, width=15, height=1, command=self.toggle_capture_button)
 
         # Add The Button to Canvas
-        self.canvas.create_window(540, 750, window=self.cap_btn)
+        self.canvas.create_window(590, 750, window=self.cap_btn)
         
         ####
         self.delay = 15
@@ -119,18 +121,18 @@ class App:
 
             # Display main video frame on canvas
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-            self.canvas.create_image(10, 50, image=self.photo, anchor=tkinter.NW)
-            self.canvas.create_text(330, 25, text="Main Frame", fill=fg1, anchor=tkinter.CENTER, font=font1)
+            self.canvas.create_image(50, 50, image=self.photo, anchor=tkinter.NW)
+            self.canvas.create_text(350, 40, text="Camera", fill=fg1, anchor=tkinter.CENTER, font=font1)
 
-            # Display cropped images on canvas
-            self.canvas.create_text(330, 570, text="Detection Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
+            # Display cropped gray images on canvas
+            self.canvas.create_text(350, 560, text="Detection Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
 
             self.cropped_photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(cv2.resize(img_gray1, (200, 200))))
-            self.canvas.create_image(self.cropped_photo1.width() + 10, self.photo.height() + 100, image=self.cropped_photo1,
+            self.canvas.create_image(self.cropped_photo1.width() + 50, self.photo.height() + 90, image=self.cropped_photo1,
                                      anchor=tkinter.NE)
 
             self.cropped_photo2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(cv2.resize(img_gray2, (200, 200))))
-            self.canvas.create_image(self.cropped_photo2.width() + 210, self.photo.height() + 100, image=self.cropped_photo2,
+            self.canvas.create_image(self.cropped_photo2.width() + 250, self.photo.height() + 90, image=self.cropped_photo2,
                                     anchor=tkinter.NE)
 
             # Make predictions
@@ -146,15 +148,15 @@ class App:
             # Display predictions and results on canvas
             
             self.canvas.delete("merah")
-            self.canvas.create_text(420, 600, text=f"Red: {result1}", fill=fg1, anchor=tkinter.NW, font=font2,
+            self.canvas.create_text(490, 600, text=f"Digit 1\t: {result1}", fill=fg1, anchor=tkinter.NW, font=font2,
                                     tag="merah")
             
             self.canvas.delete("hijau")
-            self.canvas.create_text(420, 640, text=f"Green: {result2}", fill=fg1, anchor=tkinter.NW, font=font2,
+            self.canvas.create_text(490, 640, text=f"Digit 2\t: {result2}", fill=fg1, anchor=tkinter.NW, font=font2,
                                     tag="hijau")
             
             self.canvas.delete("prediction")
-            self.canvas.create_text(420, 680, text=f"Result: {result}", fill=fg1, anchor=tkinter.NW, font=font2,
+            self.canvas.create_text(490, 680, text=f"Result\t: {result}", fill=fg1, anchor=tkinter.NW, font=font2,
                                     tag="prediction")
 
             # self.canvas.delete("result")
@@ -183,20 +185,20 @@ class App:
                 }
             
             # retrieve file name and print result based on input result
-            self.canvas.create_text(1100, 25, text="Image Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
+            self.canvas.create_text(1140, 40, text="Scan Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
             if result in img_dict and self.cap_btn_status:
                 img = cv2.imread(img_dict[result])
 
                 # display cropped image on canvas
-                self.img_result = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(cv2.resize(img, (540, 540))))
-                self.canvas.create_image(self.photo.width()*2+80, self.photo.height()+115, image = self.img_result, anchor = tkinter.SE)
+                self.img_result = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(cv2.resize(img, (680, 680))))
+                self.canvas.create_image(self.photo.width()*2+200, self.photo.height()+250, image = self.img_result, anchor = tkinter.SE)
                 print(result)
 
             # retrieve file name and print it on canvas
             if result in self.img_names and self.cap_btn_status:
                 if self.img_name_id is not None:
                     self.canvas.delete(self.img_name_id)
-                self.img_name_id = self.canvas.create_text(1100, 640, text=self.img_names[result], fill=fg1, anchor=tkinter.CENTER, font=font1)
+                self.img_name_id = self.canvas.create_text(1140, 750, text=self.img_names[result], fill=fg1, anchor=tkinter.CENTER, font=font1)
                 img = cv2.imread(self.img_names[result])
                 
         self.window.after(self.delay, self.update)
@@ -247,4 +249,4 @@ class MyVideoCapture:
             self.vid.release()
 
 # Create a window and pass it to the Application object
-App(tkinter.Tk(), "Tkinter and OpenCV")
+App(tkinter.Tk(), "C-Arm Simulator")

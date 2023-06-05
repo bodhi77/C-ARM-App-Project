@@ -28,6 +28,7 @@ class App:
     def __init__(self, window, window_title, video_source=0):
         self.window = window
         self.window.title(window_title)
+        self.window.iconbitmap('icon.ico')
         self.video_source = video_source
         
         # open video source
