@@ -68,10 +68,18 @@ class App:
         self.cap_btn_status = False
         self.cap_btn_text = tkinter.StringVar()
         self.cap_btn_text.set("Capture")
-        self.cap_btn = tkinter.Button(window, textvariable=self.cap_btn_text, font=font2, bg=bg2, fg=fg1, width=15, height=1, command=self.toggle_capture_button)
+        self.cap_btn = tkinter.Button(window, textvariable=self.cap_btn_text, font=font2, bg=bg2, fg=fg1, width=10, height=1, command=self.toggle_capture_button)
 
+        # Camera Button
+        self.cam_status = False
+        self.cam_text = tkinter.StringVar()
+        self.cam_text.set("CAM-1")
+        self.cam = tkinter.Button(window, textvariable=self.cam_text, font=font2, bg=bg2, fg=fg1, width=8, height=1, command=self.toggle_cam_button)
+
+        
         # Add The Button to Canvas
         self.canvas.create_window(590, 750, window=self.cap_btn)
+        self.canvas.create_window(110, 80, window=self.cam)
         
         ####
         self.delay = 15
@@ -92,6 +100,15 @@ class App:
             self.cap_btn_text.set("Capturing...")
         else:
             self.cap_btn_text.set("Capture")
+
+    def toggle_cam_button(self):
+        self.cam_status = not self.cam_status
+        if self.cam_status:
+            self.cam_text.set("CAM-2")
+            self.vid.set_video_source(1)  # Set video_source to 1 for CAM-2
+        else:
+            self.cam_text.set("CAM-1")
+            self.vid.set_video_source(0)  # Set video_source to 0 for CAM-1
 
     def update(self):
         # Get a frame from the video source
@@ -122,10 +139,10 @@ class App:
             # Display main video frame on canvas
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
             self.canvas.create_image(50, 50, image=self.photo, anchor=tkinter.NW)
-            self.canvas.create_text(350, 40, text="Camera", fill=fg1, anchor=tkinter.CENTER, font=font1)
+            self.canvas.create_text(350, 35, text="Camera", fill=fg1, anchor=tkinter.CENTER, font=font1)
 
             # Display cropped gray images on canvas
-            self.canvas.create_text(350, 560, text="Detection Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
+            self.canvas.create_text(350, 555, text="Detection Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
 
             self.cropped_photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(cv2.resize(img_gray1, (200, 200))))
             self.canvas.create_image(self.cropped_photo1.width() + 50, self.photo.height() + 90, image=self.cropped_photo1,
@@ -185,50 +202,52 @@ class App:
                 }
             
             # retrieve file name and print result based on input result
-            self.canvas.create_text(1140, 40, text="Scan Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
+            self.canvas.create_text(1125, 35, text="Scan Result", fill=fg1, anchor=tkinter.CENTER, font=font1)
             if result in img_dict and self.cap_btn_status:
                 img = cv2.imread(img_dict[result])
 
                 # display cropped image on canvas
                 self.img_result = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(cv2.resize(img, (680, 680))))
-                self.canvas.create_image(self.photo.width()*2+200, self.photo.height()+250, image = self.img_result, anchor = tkinter.SE)
+                self.canvas.create_image(self.photo.width()*2+190, self.photo.height()+250, image = self.img_result, anchor = tkinter.SE)
                 print(result)
 
             # retrieve file name and print it on canvas
             if result in self.img_names and self.cap_btn_status:
                 if self.img_name_id is not None:
                     self.canvas.delete(self.img_name_id)
-                self.img_name_id = self.canvas.create_text(1140, 750, text=self.img_names[result], fill=fg1, anchor=tkinter.CENTER, font=font1)
+                self.img_name_id = self.canvas.create_text(1125, 750, text=self.img_names[result], fill=fg1, anchor=tkinter.CENTER, font=font1)
                 img = cv2.imread(self.img_names[result])
                 
         self.window.after(self.delay, self.update)
 
 class MyVideoCapture:
     def __init__(self, video_source=0):
-        # Open the video source
-        self.vid = cv2.VideoCapture(video_source)
+        self.video_source = video_source
+        self.vid = None
+        self.open_video_source()
+
+    def open_video_source(self):
+        self.vid = cv2.VideoCapture(self.video_source)
         self.vid.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-
         if not self.vid.isOpened():
-            raise ValueError("Unable to open video source", video_source)
-        
-        # Get video source width and height
-        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            print(f"Unable to open video source {self.video_source}.")
+            self.vid = None
+
+        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH) if self.vid is not None else 640
+        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT) if self.vid is not None else 480
 
     def get_frame(self):
-        if self.vid.isOpened():
+        if self.vid is not None:
             ret, frame = self.vid.read()
             if ret:
-                # return a boolean success flag and the current frame converted to BGR
                 return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             else:
                 return (ret, None)
         else:
-            return (ret, None)
-
+            # Return a black screen if the camera is not found
+            return (False, np.zeros((self.height, self.width, 3), dtype=np.uint8))
 
     def prediction(self, image, model):
         img = cv2.resize(image, (28, 28))
@@ -241,12 +260,16 @@ class MyVideoCapture:
         if prob < 0.75:
             result = 0
             prob = 0
-        return result, prob  
-    
-    # Release the video source when the object is destroyed
+        return result, prob
+
     def __del__(self):
-        if self.vid.isOpened():
+        if self.vid is not None:
             self.vid.release()
+
+    def set_video_source(self, video_source):
+        self.video_source = video_source
+        self.open_video_source()
+
 
 # Create a window and pass it to the Application object
 App(tkinter.Tk(), "C-Arm Simulator")
